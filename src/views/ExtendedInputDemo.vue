@@ -3,7 +3,7 @@
     v-on:action="onAction($event)"
     v-on:key="onKey($event)"
     :keycodeEmitters="keys"
-    :typeaheadItems="typeaheadItems">
+    :selectableOptions="typeaheadItems">
   </extended-input>
 </template>
 

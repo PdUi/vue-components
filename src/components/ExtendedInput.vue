@@ -8,28 +8,28 @@
       v-model="myText" />
     <i
       class="icon"
-      :class="actionableIcon.classlist"
+      :class="actionableIcon.classList"
       v-for="actionableIcon in actionableIcons"
       @click="onAction($event, actionableIcon)"
-      :key="actionableIcon">
+      :key="actionableIcon.action">
     </i>
     <div
-      class="typeahead-items"
-      v-show="myTypeaheadItems.length">
-        <div class="item close-typeahead">
+      class="selectable-options"
+      v-if="mySelectableOptions.length">
+        <div class="option close-selectable-options">
           <i
             class="icon close"
-            @click="closeTypeahead"></i>
+            @click="closeSelectableOptions"></i>
         </div>
         <div
           tabindex="-1"
-          class="item"
-          v-for="item in myTypeaheadItems"
-          @click="typeaheadItemClicked(item)"
-          v-focus="item === itemInFocus"
+          class="option"
+          v-for="option in mySelectableOptions"
+          @click="optionClicked(option)"
+          v-focus="option === optionInFocus"
           @keydown="onKeydown($event)"
-          :key="item">
-            {{item}}
+          :key="option">
+            {{option}}
         </div>
     </div>
   </div>
@@ -65,7 +65,7 @@
         type: String,
         default: ''
       },
-      typeaheadItems: {
+      selectableOptions: {
         type: Array,
         default: function () {
           return [];
@@ -75,35 +75,35 @@
     data () {
       return {
         myText: this.text,
-        myTypeaheadItems: [],
+        mySelectableOptions: [],
         inputInFocus: true,
-        itemInFocus: undefined
+        optionInFocus: undefined
       };
     },
     watch: {
-      typeaheadItems: function (val) {
-        this.myTypeaheadItems = val.slice(0);
+      selectableOptions: function (val) {
+        this.mySelectableOptions = val.slice(0);
       }
     },
     methods: {
-      closeTypeahead: function () {
-        this.myTypeaheadItems = [];
+      closeSelectableOptions: function () {
+        this.mySelectableOptions = [];
       },
       onKeydown: function (event) {
         var arrowKeys = [Keycode.uparrow, Keycode.downarrow];
         if (!arrowKeys.find(arrowKey => arrowKey === event.keyCode)) {
-          this.closeTypeahead();
-        } else if (this.myTypeaheadItems.length) {
-          var inFocusIndex = this.myTypeaheadItems.indexOf(this.itemInFocus);
+          this.closeSelectableOptions();
+        } else if (this.mySelectableOptions.length) {
+          var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
 
           if (inFocusIndex === -1) {
-            this.itemInFocus = this.myTypeaheadItems[0];
+            this.optionInFocus = this.mySelectableOptions[0];
             this.inputInFocus = false;
-          } else if (inFocusIndex !== this.myTypeaheadItems.length - 1) {
-            this.itemInFocus = this.myTypeaheadItems[inFocusIndex + 1];
+          } else if (inFocusIndex !== this.mySelectableOptions.length - 1) {
+            this.optionInFocus = this.mySelectableOptions[inFocusIndex + 1];
             this.inputInFocus = false;
           } else {
-            this.itemInFocus = undefined;
+            this.optionInFocus = undefined;
             this.inputInFocus = true;
           }
         }
@@ -132,8 +132,8 @@
           this.event.element.focus();
         }
       },
-      typeaheadItemClicked: function (clickedItem) {
-        this.$emit('action', { action: 'typeahead-item-clicked', input: clickedItem });
+      optionClicked: function (clickedOption) {
+        this.$emit('action', { action: 'option-selected', input: clickedOption });
       }
     }
   };
@@ -158,14 +158,14 @@
     outline: unset;
   }
 
-  .typeahead-items {
+  .selectable-options {
     min-width: 15%;
     margin-top: .25rem;
     position: absolute;
     top: 100%;
   }
 
-  .close-typeahead {
+  .close-selectable-options {
     left: 90%;
     position: absolute;
   }
