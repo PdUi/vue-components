@@ -10,6 +10,13 @@ export default {
 </script>
 
 <style>
-#app {
-}
+  .icon.close::after,
+  .icon.delete::after,
+  .icon.remove::after {
+    content: 'X';
+  }
+
+  .icon.plus::after {
+    content: '+';
+  }
 </style>
