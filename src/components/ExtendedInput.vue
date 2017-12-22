@@ -19,7 +19,7 @@
         <div class="option close-selectable-options">
           <i
             class="icon close"
-            @click="closeSelectableOptions"></i>
+            @click="closeSelectableOptions()"></i>
         </div>
         <div
           tabindex="-1"
@@ -75,7 +75,7 @@
     data () {
       return {
         myText: this.text,
-        mySelectableOptions: [],
+        mySelectableOptions: this.selectableOptions,
         inputInFocus: true,
         optionInFocus: undefined
       };
