@@ -117,7 +117,10 @@
           }
 
           if (keycodeEmitter.retainFocus) {
-            event.target.focus();
+            this.inputInFocus = true;
+            this.optionInFocus = undefined;
+          } else {
+            this.inputInFocus = false;
           }
         }
       },
