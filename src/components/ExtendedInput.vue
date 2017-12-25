@@ -36,7 +36,6 @@
 </template>
 
 <script>
-  import Keycode from '@/enums/keycode';
   import focus from '@/directives/focus';
 
   export default {
@@ -52,6 +51,18 @@
         }
       },
       keycodeEmitters: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      advanceFocusKeycodes: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      regressFocusKeycodes: {
         type: Array,
         default: function () {
           return [];
@@ -90,53 +101,57 @@
         this.mySelectableOptions = [];
       },
       onKeydown: function (event) {
-        var arrowKeys = [Keycode.uparrow, Keycode.downarrow];
-        if (!arrowKeys.find(arrowKey => arrowKey === event.keyCode)) {
-          this.closeSelectableOptions();
-        } else if (this.mySelectableOptions.length) {
-          var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
+        var shouldAdvance = this.advanceFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
+        var shouldRegress = this.regressFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
 
-          if (inFocusIndex === -1) {
-            this.optionInFocus = this.mySelectableOptions[0];
+        if (this.mySelectableOptions.length && (shouldAdvance || shouldRegress)) {
+          var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
+          var lastOptionInFocus = inFocusIndex !== this.mySelectableOptions.length - 1;
+          var firstOptionInFocus = inFocusIndex !== 0;
+
+          if (inputInFocus) {
+            this.optionInFocus = shouldAdvance ? this.mySelectableOptions[0] : this.mySelectableOptions[this.mySelectableOptions.length - 1];
             this.inputInFocus = false;
-          } else if (inFocusIndex !== this.mySelectableOptions.length - 1) {
+          } else if (shouldAdvance && lastOptionInFocus) {
             this.optionInFocus = this.mySelectableOptions[inFocusIndex + 1];
+            this.inputInFocus = false;
+          } else if (shouldRegress && firstOptionInFocus) {
+            this.optionInFocus = this.mySelectableOptions[inFocusIndex - 1];
             this.inputInFocus = false;
           } else {
             this.optionInFocus = undefined;
             this.inputInFocus = true;
           }
+        } else {
+          this.closeSelectableOptions();
         }
 
         var keycodeEmitter = this.keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
         if (keycodeEmitter) {
           this.$emit('key', { code: event.keyCode, input: this.myText });
 
-          if (keycodeEmitter.shouldClear) {
-            this.myText = '';
-          }
-
-          if (keycodeEmitter.retainFocus) {
-            this.inputInFocus = true;
-            this.optionInFocus = undefined;
-          } else {
-            this.inputInFocus = false;
-          }
+          this.p_handleActionsCommonFunctionality(keycodeEmitter);
         }
       },
       onAction: function (event, actionableIcon) {
         this.$emit('action', { action: actionableIcon.action, input: this.myText });
 
-        if (actionableIcon.shouldClear) {
-          this.myText = '';
-        }
-
-        if (actionableIcon.retainFocus) {
-          this.event.element.focus();
-        }
+        this.p_handleActionsCommonFunctionality(actionableIcon);
       },
       optionClicked: function (clickedOption) {
         this.$emit('action', { action: 'option-selected', input: clickedOption });
+      },
+      p_handleActionsCommonFunctionality(action) {
+        if (action.shouldClear) {
+          this.myText = '';
+        }
+
+        if (action.retainFocus) {
+          this.inputInFocus = true;
+          this.optionInFocus = undefined;
+        } else {
+          this.inputInFocus = false;
+        }
       }
     }
   };

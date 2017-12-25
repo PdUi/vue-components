@@ -325,4 +325,55 @@ describe('ExtendedInput.vue', () => {
     //     .toEqual('');
     // });
   });
+
+  describe('onAction', () => {
+    it('should emit', () => {
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.onAction({}, {});
+      expect(stub).toBeCalled();
+    });
+
+    it('should clear text', () => {
+      const vm = vmFactory({ text: 'Hello World' });
+      expect(vm.myText).toEqual('Hello World');
+
+      vm.onAction({}, new ActionEmitter('', { retainFocus: false, shouldClear: true }));
+      expect(vm.myText).toEqual('');
+    });
+
+    it('should not clear text', () => {
+      const vm = vmFactory({ text: 'Hello World' });
+      expect(vm.myText).toEqual('Hello World');
+
+      vm.onAction({}, new ActionEmitter('', { retainFocus: false, shouldClear: false }));
+      expect(vm.myText).toEqual('Hello World');
+    });
+
+    it('should keep input in focus', () => {
+      const vm = vmFactory({ inputInFocus: false });
+
+      vm.onAction({}, new ActionEmitter());
+      expect(vm.inputInFocus).toEqual(true);
+      expect(vm.optionInFocus).toEqual(undefined);
+    });
+
+    it('should keep not input in focus', () => {
+      const vm = vmFactory({ inputInFocus: true });
+
+      vm.onAction({}, new ActionEmitter('', { retainFocus: false }));
+      expect(vm.inputInFocus).toEqual(false);
+    });
+  });
+
+  describe('optionClicked', () => {
+    it('should emit', () => {
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.optionClicked();
+      expect(stub).toBeCalled();
+    });
+  });
 });

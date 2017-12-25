@@ -3,7 +3,9 @@
     v-on:action="onAction($event)"
     v-on:key="onKey($event)"
     :keycodeEmitters="keys"
-    :selectableOptions="typeaheadItems">
+    :selectableOptions="typeaheadItems"
+    :advanceFocusKeycodes="advanceFocusKeycodes"
+    :regressFocusKeycodes="regressFocusKeycodes">
   </extended-input>
 </template>
 
@@ -23,7 +25,9 @@ export default {
         new KeycodeEmitter(Keycode.enter),
         new KeycodeEmitter(Keycode.tab)
       ],
-      typeaheadItems: []
+      typeaheadItems: [],
+      advanceFocusKeycodes: [Keycode.downarrow],
+      regressFocusKeycodes: [Keycode.uparrow]
     };
   },
   methods: {
