@@ -1,5 +1,10 @@
 export default class ActionEmitter {
-  constructor (action, { classList = undefined, shouldClear = true, retainFocus = true } = {}) {
+  action: string;
+  classList: string[];
+  retainFocus: boolean;
+  shouldClear: boolean;
+
+  constructor (action: string, { classList = undefined, shouldClear = true, retainFocus = true }: { classList?: string | string[] | undefined, shouldClear?: boolean, retainFocus?: boolean } = {}) {
     classList = classList || [];
     if (classList instanceof String) {
       classList = classList.split(' ');

@@ -9,37 +9,35 @@
   </extended-input>
 </template>
 
-<script>
-import Keycode from '@/enums/keycode';
-import KeycodeEmitter from '@/models/keycodeEmitter';
-import ExtendedInput from '@/components/ExtendedInput';
+<script lang="ts">
+import Vue from 'vue';
+import Component from 'vue-class-component';
 
-export default {
-  name: 'extended-input-demo',
-  components: {
-    ExtendedInput
-  },
-  data () {
-    return {
-      keys: [
-        new KeycodeEmitter(Keycode.enter),
-        new KeycodeEmitter(Keycode.tab)
-      ],
-      typeaheadItems: [],
-      advanceFocusKeycodes: [Keycode.downarrow],
-      regressFocusKeycodes: [Keycode.uparrow]
-    };
-  },
-  methods: {
-    onKey: function (event) {
-      console.log(event);
-      this.typeaheadItems = ['water', 'h2o'];
-    },
-    onAction: function (event) {
-      console.log(event);
-    }
+import KeyCode from '../enums/keycode';
+import KeycodeEmitter from '../models/keycodeEmitter';
+import ExtendedInput from '../components/ExtendedInput.vue';
+
+@Component({
+  components: { ExtendedInput }
+})
+export default class ExtendedInputDemo extends Vue {
+  keys: KeycodeEmitter[] = [
+    new KeycodeEmitter(KeyCode.enter),
+    new KeycodeEmitter(KeyCode.tab)
+  ];
+  typeaheadItems: any[] = [];
+  advanceFocusKeycodes: KeycodeEmitter[] = [new KeycodeEmitter(KeyCode.downarrow)];
+  regressFocusKeycodes: KeycodeEmitter[] = [new KeycodeEmitter(KeyCode.uparrow)];
+
+  onKey (event: any) {
+    console.log(event);
+    this.typeaheadItems = ['water', 'h2o'];
   }
-};
+
+  onAction (event: any) {
+    console.log(event);
+  }
+}
 </script>
 
 <style scoped>

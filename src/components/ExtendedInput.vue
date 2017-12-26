@@ -35,126 +35,116 @@
   </div>
 </template>
 
-<script>
-  import focus from '@/directives/focus';
+<script lang="ts">
+  import Vue from 'vue';
+  import Component from 'vue-class-component';
+  import { Prop, Watch } from 'vue-property-decorator';
 
-  export default {
-    name: 'extended-input',
-    directives: {
-      focus: focus
-    },
-    props: {
-      actionableIcons: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      },
-      keycodeEmitters: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      },
-      advanceFocusKeycodes: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      },
-      regressFocusKeycodes: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      },
-      placeholder: {
-        type: String,
-        default: ''
-      },
-      text: {
-        type: String,
-        default: ''
-      },
-      selectableOptions: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      }
-    },
-    data () {
-      return {
-        myText: this.text,
-        mySelectableOptions: this.selectableOptions,
-        inputInFocus: true,
-        optionInFocus: undefined
-      };
-    },
-    watch: {
-      selectableOptions: function (val) {
-        this.mySelectableOptions = val.slice(0);
-      }
-    },
-    methods: {
-      closeSelectableOptions: function () {
-        this.mySelectableOptions = [];
-      },
-      onKeydown: function (event) {
-        var shouldAdvance = this.advanceFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
-        var shouldRegress = this.regressFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
+  import focus from '../directives/focus';
+  import ActionEmitter from '../models/actionEmitter';
+  import KeycodeEmitter from '../models/keycodeEmitter';
 
-        if (this.mySelectableOptions.length && (shouldAdvance || shouldRegress)) {
-          var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
-          var lastOptionInFocus = inFocusIndex !== this.mySelectableOptions.length - 1;
-          var firstOptionInFocus = inFocusIndex !== 0;
+  @Component({
+    directives: { focus }
+  })
+  export default class ExtendedInput extends Vue {
+    @Prop() actionableIcons: ActionEmitter[];
+    @Prop() keycodeEmitters: KeycodeEmitter[];
+    @Prop() advanceFocusKeycodes: any[];
+    @Prop() regressFocusKeycodes: any[];
+    @Prop() placeholder: string;
+    @Prop() text: string;
+    @Prop() selectableOptions: any[];
 
-          if (inputInFocus) {
-            this.optionInFocus = shouldAdvance ? this.mySelectableOptions[0] : this.mySelectableOptions[this.mySelectableOptions.length - 1];
-            this.inputInFocus = false;
-          } else if (shouldAdvance && lastOptionInFocus) {
-            this.optionInFocus = this.mySelectableOptions[inFocusIndex + 1];
-            this.inputInFocus = false;
-          } else if (shouldRegress && firstOptionInFocus) {
-            this.optionInFocus = this.mySelectableOptions[inFocusIndex - 1];
-            this.inputInFocus = false;
-          } else {
-            this.optionInFocus = undefined;
-            this.inputInFocus = true;
-          }
-        } else {
-          this.closeSelectableOptions();
-        }
+    myText: string = ''; // this.text;
+    mySelectableOptions: any[] = this.selectableOptions;
+    inputInFocus: boolean = true;
+    optionInFocus: any = undefined;
+    // name: 'extended-input',
+    // directives: {
+    //   focus: focus
+    // },
+    // data () {
+    //   return {
+    //     myText: this.text,
+    //     mySelectableOptions: this.selectableOptions,
+    //     inputInFocus: true,
+    //     optionInFocus: undefined
+    //   };
+    // },
+    @Watch('selectableOptions') onChange (val: any[], oldVal: any[]) {
+      this.mySelectableOptions = val.slice(0);
+    }
 
-        var keycodeEmitter = this.keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
-        if (keycodeEmitter) {
-          this.$emit('key', { code: event.keyCode, input: this.myText });
+    closeSelectableOptions () {
+      this.mySelectableOptions = [];
+    }
 
-          this.p_handleActionsCommonFunctionality(keycodeEmitter);
-        }
-      },
-      onAction: function (event, actionableIcon) {
-        this.$emit('action', { action: actionableIcon.action, input: this.myText });
+    onKeydown (event: any) {
+      var shouldAdvance = !!this.advanceFocusKeycodes.find(arrowKey => arrowKey.keycode === event.keyCode);
+      var shouldRegress = !!this.regressFocusKeycodes.find(arrowKey => arrowKey.keycode === event.keyCode);
 
-        this.p_handleActionsCommonFunctionality(actionableIcon);
-      },
-      optionClicked: function (clickedOption) {
-        this.$emit('action', { action: 'option-selected', input: clickedOption });
-      },
-      p_handleActionsCommonFunctionality(action) {
-        if (action.shouldClear) {
-          this.myText = '';
-        }
+      if (this.mySelectableOptions.length && (shouldAdvance || shouldRegress)) {
+        var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
+        var lastOptionInFocus = inFocusIndex === this.mySelectableOptions.length - 1;
+        var firstOptionInFocus = inFocusIndex === 0;
 
-        if (action.retainFocus) {
-          this.inputInFocus = true;
-          this.optionInFocus = undefined;
-        } else {
+        console.log(this.inputInFocus);
+        console.log(inFocusIndex);
+        console.log(`lastOptionInFocus: ${lastOptionInFocus}`);
+        console.log(`firstOptionInFocus: ${firstOptionInFocus}`);
+        console.log(`shouldAdvance: ${shouldAdvance}`);
+        console.log(`shouldRegress: ${shouldRegress}`);
+
+        if (this.inputInFocus) {
+          this.optionInFocus = shouldAdvance ? this.mySelectableOptions[0] : this.mySelectableOptions[this.mySelectableOptions.length - 1];
           this.inputInFocus = false;
+        } else if (shouldAdvance && !lastOptionInFocus) {
+          console.log('here');
+          this.optionInFocus = this.mySelectableOptions[inFocusIndex + 1];
+          this.inputInFocus = false;
+        } else if (shouldRegress && !firstOptionInFocus) {
+          this.optionInFocus = this.mySelectableOptions[inFocusIndex - 1];
+          this.inputInFocus = false;
+        } else {
+          this.optionInFocus = undefined;
+          this.inputInFocus = true;
         }
+      } else {
+        this.closeSelectableOptions();
+      }
+
+      var keycodeEmitter = this.keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
+      if (keycodeEmitter) {
+        this.$emit('key', { code: event.keyCode, input: this.myText });
+
+        this.pHandleActionsCommonFunctionality(keycodeEmitter);
       }
     }
-  };
+
+    onAction (event: any, actionableIcon: any) {
+      this.$emit('action', { action: actionableIcon.action, input: this.myText });
+
+      this.pHandleActionsCommonFunctionality(actionableIcon);
+    }
+
+    optionClicked (clickedOption: any) {
+      this.$emit('action', { action: 'option-selected', input: clickedOption });
+    }
+
+    pHandleActionsCommonFunctionality (action: any) {
+      if (action.shouldClear) {
+        this.myText = '';
+      }
+
+      if (action.retainFocus) {
+        this.inputInFocus = true;
+        this.optionInFocus = undefined;
+      } else {
+        this.inputInFocus = false;
+      }
+    }
+  }
 </script>
 
 <style scoped>
