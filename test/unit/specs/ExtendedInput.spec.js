@@ -9,7 +9,7 @@ const vmFactory = propsData => new Constructor({ propsData }).$mount();
 
 describe('ExtendedInput.vue', () => {
   describe('default props', () => {
-    it('should have an empty input', () => {
+    it('should have no text', () => {
       const vm = vmFactory();
 
       expect(vm.$el.querySelector('input').value)
@@ -36,6 +36,20 @@ describe('ExtendedInput.vue', () => {
       expect(vm.$el.querySelector('input').placeholder)
         .toEqual('');
     });
+
+    it('should not be disabled', () => {
+      const vm = vmFactory();
+
+      expect(vm.$el.querySelector('input:disabled'))
+        .toBeNull();
+    });
+
+    it('should not have actionable icons', () => {
+      const vm = vmFactory();
+
+      expect(vm.$el.querySelectorAll('extended-input > i').length)
+        .toEqual(0);
+    });
   });
 
   describe('input', () => {
@@ -53,10 +67,18 @@ describe('ExtendedInput.vue', () => {
         .toEqual('Hello World!');
     });
 
+    it('should be disabled', () => {
+      const vm = vmFactory({ disabled: true });
+
+      expect(vm.$el.querySelector('input:disabled'))
+        .not
+        .toBeNull();
+    });
+
     it('calls onKeydown when key pressed in input', () => {
       const stub = jest.fn();
       const vm = vmFactory();
-      vm.onKeydown = stub;
+      vm.onInputKeydown = stub;
 
       const event = document.createEvent('HTMLEvents');
       event.initEvent('keydown', false, true);
@@ -89,27 +111,16 @@ describe('ExtendedInput.vue', () => {
         .toContain(classes[1]);
     });
 
-    it('calls onAction when click on actionableIcon', () => {
+    it('calls onActionableIconClick when click on actionableIcon', () => {
       const stub = jest.fn();
-      const classes = ['delete', 'close'];
-      const actionableIcons = [new ActionEmitter('', { classList: classes.join(' ') })];
+      const classes = 'delete close';
+      const actionableIcons = [new ActionEmitter('', { classList: classes })];
       const vm = vmFactory({ actionableIcons });
-      vm.onAction = stub;
+      vm.onActionableIconClick = stub;
 
-      vm.$el.querySelector(`.${classes[0]}`).click();
+      vm.$el.querySelector(`.delete`).click();
       expect(stub).toBeCalled();
     });
-
-    // it('calls handleClick when click on message', () => {
-    //   const classes = ['delete', 'close'];
-    //   const actionableIcons = [new ActionEmitter('', { classList: classes.join(' ') })];
-    //   const Constructor = Vue.extend(ExtendedInput);
-    //   const vm = new Constructor({ propsData: { actionableIcons } }).$mount();
-    //   spyOn(vm, 'onAction');
-
-    //   vm.$el.querySelector(`.${classes[0]}`).click();
-    //   expect(vm.onAction).toBeCalled();
-    // });
   });
 
   describe('selectableOptions', () => {
@@ -165,7 +176,7 @@ describe('ExtendedInput.vue', () => {
       const stub = jest.fn();
       const selectableOptions = ['', ''];
       const vm = vmFactory({ selectableOptions });
-      vm.onKeydown = stub;
+      vm.onSelectableOptionKeydown = stub;
 
       const event = document.createEvent('HTMLEvents');
       event.initEvent('keydown', false, true);
@@ -189,10 +200,141 @@ describe('ExtendedInput.vue', () => {
     });
   });
 
-  describe('onKeydown', () => {
-    it('keycode emitter should retain focus', () => {
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
-      const vm = vmFactory({ keycodeEmitters });
+  describe('onInputKeydown', () => {
+    it('should call p_handleKeydown', () => {
+      const stub = jest.fn();
+
+      const vm = vmFactory();
+      vm.p_handleKeydown = stub;
+      vm.onInputKeydown(undefined);
+
+      expect(stub)
+        .toBeCalled();
+    });
+  });
+
+  describe('onSelectableOptionKeydown', () => {
+    it('should call p_handleKeydown', () => {
+      const stub = jest.fn();
+
+      const vm = vmFactory();
+      vm.p_handleKeydown = stub;
+      vm.onSelectableOptionKeydown(undefined);
+
+      expect(stub)
+        .toBeCalled();
+    });
+  });
+
+  describe('onActionableIconClick', () => {
+    it('should emit', () => {
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.onActionableIconClick({}, {});
+      expect(stub).toBeCalled();
+    });
+
+    it('should clear text', () => {
+      const vm = vmFactory({ text: 'Hello World' });
+      expect(vm.myText).toEqual('Hello World');
+
+      vm.onActionableIconClick({}, new ActionEmitter('', { retainFocus: false, shouldClear: true }));
+      expect(vm.myText).toEqual('');
+    });
+
+    it('should not clear text', () => {
+      const vm = vmFactory({ text: 'Hello World' });
+      expect(vm.myText).toEqual('Hello World');
+
+      vm.onActionableIconClick({}, new ActionEmitter('', { retainFocus: false, shouldClear: false }));
+      expect(vm.myText).toEqual('Hello World');
+    });
+
+    it('should keep input in focus', () => {
+      const vm = vmFactory({ inputInFocus: false });
+
+      vm.onActionableIconClick({}, new ActionEmitter());
+      expect(vm.inputInFocus).toEqual(true);
+      expect(vm.optionInFocus).toEqual(undefined);
+    });
+
+    it('should keep not input in focus', () => {
+      const vm = vmFactory({ inputInFocus: true });
+
+      vm.onActionableIconClick({}, new ActionEmitter('', { retainFocus: false }));
+      expect(vm.inputInFocus).toEqual(false);
+    });
+  });
+
+  describe('optionClicked', () => {
+    it('should emit', () => {
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.optionClicked();
+      expect(stub).toBeCalled();
+    });
+  });
+
+  describe('p_handleKeydown', () => {
+    it('p_handleFocus should be called', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.tab;
+      event.initEvent('keydown', false, true);
+
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.p_handleFocus = stub;
+      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
+      expect(stub).toBeCalled();
+    });
+
+    it('p_handleActionsCommonFunctionality should be called', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.p_handleActionsCommonFunctionality = stub;
+      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
+      expect(stub).toBeCalled();
+    });
+
+    it('$emit should be called', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.p_handleKeydown(event, inputKeycodeEmitters, 'Hello World');
+      expect(stub).toBeCalled();
+    });
+
+    it('$emit should not be called', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      const stub = jest.fn();
+      const vm = vmFactory();
+      vm.$emit = stub;
+      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
+      expect(stub).not.toBeCalled();
+    });
+  });
+
+  describe('p_handleActionsCommonFunctionality', () => {
+    it('input should retain focus', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const vm = vmFactory({ inputKeycodeEmitters });
 
       expect(vm.inputInFocus)
         .toEqual(true);
@@ -201,15 +343,15 @@ describe('ExtendedInput.vue', () => {
       event.keyCode = Keycode.enter;
       event.initEvent('keydown', false, true);
 
-      vm.onKeydown(event);
+      vm.onInputKeydown(event);
 
       expect(vm.inputInFocus)
         .toEqual(true);
     });
 
-    it('keycode emitter should not retain focus', () => {
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
-      const vm = vmFactory({ keycodeEmitters });
+    it('input should not retain focus', () => {
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
+      const vm = vmFactory({ inputKeycodeEmitters });
 
       expect(vm.inputInFocus)
         .toEqual(true);
@@ -218,17 +360,17 @@ describe('ExtendedInput.vue', () => {
       event.keyCode = Keycode.enter;
       event.initEvent('keydown', false, true);
 
-      vm.onKeydown(event);
+      vm.onInputKeydown(event);
 
       expect(vm.inputInFocus)
         .toEqual(false);
     });
 
-    it('keycode emitter should retain focus', () => {
+    it('focus should be called on input', () => {
       const stub = jest.fn();
 
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
-      const vm = vmFactory({ keycodeEmitters });
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const vm = vmFactory({ inputKeycodeEmitters });
 
       const event = document.createEvent('HTMLEvents');
       event.keyCode = Keycode.enter;
@@ -242,11 +384,11 @@ describe('ExtendedInput.vue', () => {
         .toBeCalled();
     });
 
-    it('keycode emitter should not retain focus', () => {
+    it('focus should not be called on input', () => {
       const stub = jest.fn();
 
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
-      const vm = vmFactory({ keycodeEmitters });
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
+      const vm = vmFactory({ inputKeycodeEmitters });
 
       const event = document.createEvent('HTMLEvents');
       event.keyCode = Keycode.enter;
@@ -262,8 +404,8 @@ describe('ExtendedInput.vue', () => {
     });
 
     it('keycode emitter should clear input', () => {
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
-      const vm = vmFactory({ text: 'Hello World', keycodeEmitters });
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const vm = vmFactory({ text: 'Hello World', inputKeycodeEmitters });
 
       expect(vm.$el.querySelector('input').value)
         .toEqual('Hello World');
@@ -280,8 +422,8 @@ describe('ExtendedInput.vue', () => {
     });
 
     it('keycode emitter should not clear input', () => {
-      const keycodeEmitters = [new KeycodeEmitter(Keycode.enter, { shouldClear: false })];
-      const vm = vmFactory({ text: 'Hello World', keycodeEmitters });
+      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { shouldClear: false })];
+      const vm = vmFactory({ text: 'Hello World', inputKeycodeEmitters });
 
       expect(vm.$el.querySelector('input').value)
         .toEqual('Hello World');
@@ -296,84 +438,164 @@ describe('ExtendedInput.vue', () => {
       expect(vm.$el.querySelector('input').value)
         .toEqual('Hello World');
     });
-
-    // it('keycode emitter should clear input', () => {
-    //   const keycodeEmitters = [new KeycodeEmitter(Keycode.tab)];
-    //   const vm = vmFactory({ keycodeEmitters });
-
-    //   expect(vm.$el.querySelector('input').value)
-    //     .toEqual('');
-
-    //   const event = document.createEvent('HTMLEvents');
-    //   event.char = Keycode.a;
-    //   event.initEvent('keypress', false, true);
-    //   vm.$el.querySelector('input').dispatchEvent(event);
-
-    //   vm._watcher.run();
-
-    //   expect(vm.$el.querySelector('input').value)
-    //     .toEqual('a');
-
-    //   const event2 = document.createEvent('HTMLEvents');
-    //   event2.char = Keycode.a;
-    //   event2.initEvent('keypress', false, true);
-    //   vm.$el.querySelector('input').dispatchEvent(event2);
-
-    //   vm._watcher.run();
-
-    //   expect(vm.$el.querySelector('input').value)
-    //     .toEqual('');
-    // });
   });
 
-  describe('onAction', () => {
-    it('should emit', () => {
+  describe('p_handleFocus', () => {
+    it('should close selectable options', () => {
       const stub = jest.fn();
-      const vm = vmFactory();
-      vm.$emit = stub;
-      vm.onAction({}, {});
-      expect(stub).toBeCalled();
+
+      const vm = vmFactory({ advanceFocusKeycodes: [], regressFocusKeycodes: [], selectableOptions: [''] });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.closeSelectableOptions = stub;
+      vm.p_handleFocus(event);
+
+      expect(stub)
+        .toBeCalled();
     });
 
-    it('should clear text', () => {
-      const vm = vmFactory({ text: 'Hello World' });
-      expect(vm.myText).toEqual('Hello World');
-
-      vm.onAction({}, new ActionEmitter('', { retainFocus: false, shouldClear: true }));
-      expect(vm.myText).toEqual('');
-    });
-
-    it('should not clear text', () => {
-      const vm = vmFactory({ text: 'Hello World' });
-      expect(vm.myText).toEqual('Hello World');
-
-      vm.onAction({}, new ActionEmitter('', { retainFocus: false, shouldClear: false }));
-      expect(vm.myText).toEqual('Hello World');
-    });
-
-    it('should keep input in focus', () => {
-      const vm = vmFactory({ inputInFocus: false });
-
-      vm.onAction({}, new ActionEmitter());
-      expect(vm.inputInFocus).toEqual(true);
-      expect(vm.optionInFocus).toEqual(undefined);
-    });
-
-    it('should keep not input in focus', () => {
-      const vm = vmFactory({ inputInFocus: true });
-
-      vm.onAction({}, new ActionEmitter('', { retainFocus: false }));
-      expect(vm.inputInFocus).toEqual(false);
-    });
-  });
-
-  describe('optionClicked', () => {
-    it('should emit', () => {
+    it('should not close selectable options', () => {
       const stub = jest.fn();
-      const vm = vmFactory();
-      vm.$emit = stub;
-      vm.optionClicked();
-      expect(stub).toBeCalled();
+
+      const vm = vmFactory({ advanceFocusKeycodes: [Keycode.enter], regressFocusKeycodes: [], selectableOptions: [''] });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.closeSelectableOptions = stub;
+      vm.p_handleFocus(event);
+
+      expect(stub)
+        .not
+        .toBeCalled();
+    });
+
+    it('should remove focus from input', () => {
+      const vm = vmFactory({
+        advanceFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [],
+        selectableOptions: ['']
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      expect(vm.inputInFocus)
+        .toEqual(true);
+
+      vm.p_handleFocus(event);
+
+      expect(vm.inputInFocus)
+        .toEqual(false);
+    });
+
+    it('should place focus on option', () => {
+      const vm = vmFactory({
+        advanceFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [],
+        selectableOptions: ['']
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      expect(vm.optionInFocus)
+        .toEqual(undefined);
+
+      vm.p_handleFocus(event);
+
+      expect(vm.optionInFocus)
+        .toEqual('');
+    });
+
+    it('should advance focus', () => {
+      const selectableOptions = ['foo', 'bar'];
+      const vm = vmFactory({
+        advanceFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [],
+        selectableOptions
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.optionInFocus = selectableOptions[0];
+      vm.inputInFocus = false;
+
+      vm.p_handleFocus(event);
+
+      expect(vm.optionInFocus)
+        .toEqual(selectableOptions[1]);
+    });
+
+    it('should regress focus', () => {
+      const selectableOptions = ['foo', 'bar'];
+      const vm = vmFactory({
+        advanceFocusKeycodes: [],
+        regressFocusKeycodes: [Keycode.enter],
+        selectableOptions
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.optionInFocus = selectableOptions[1];
+      vm.inputInFocus = false;
+
+      vm.p_handleFocus(event);
+
+      expect(vm.optionInFocus)
+        .toEqual(selectableOptions[0]);
+    });
+
+    it('should place focus on input', () => {
+      const selectableOptions = ['foo', 'bar'];
+      const vm = vmFactory({
+        advanceFocusKeycodes: [],
+        regressFocusKeycodes: [Keycode.enter],
+        selectableOptions
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.optionInFocus = selectableOptions[0];
+      vm.inputInFocus = false;
+
+      vm.p_handleFocus(event);
+
+      expect(vm.inputInFocus)
+        .toEqual(true);
+    });
+
+    it('should remove focus from option', () => {
+      const selectableOptions = ['foo', 'bar'];
+      const vm = vmFactory({
+        advanceFocusKeycodes: [],
+        regressFocusKeycodes: [Keycode.enter],
+        selectableOptions
+      });
+
+      const event = document.createEvent('HTMLEvents');
+      event.keyCode = Keycode.enter;
+      event.initEvent('keydown', false, true);
+
+      vm.optionInFocus = selectableOptions[0];
+      vm.inputInFocus = false;
+
+      vm.p_handleFocus(event);
+
+      expect(vm.optionInFocus)
+        .toEqual(undefined);
     });
   });
 });

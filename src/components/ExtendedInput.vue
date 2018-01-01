@@ -2,15 +2,17 @@
   <div class="extended-input">
     <input
       type="text"
-      @keydown="onKeydown($event)"
+      ref="input"
+      @keydown="onInputKeydown($event)"
       :placeholder="placeholder"
+      :disabled="disabled"
       v-focus="inputInFocus"
       v-model="myText" />
     <i
       class="icon"
       :class="actionableIcon.classList"
       v-for="actionableIcon in actionableIcons"
-      @click="onAction($event, actionableIcon)"
+      @click="onActionableIconClick($event, actionableIcon)"
       :key="actionableIcon.action">
     </i>
     <div
@@ -27,7 +29,7 @@
           v-for="option in mySelectableOptions"
           @click="optionClicked(option)"
           v-focus="option === optionInFocus"
-          @keydown="onKeydown($event)"
+          @keydown="onSelectableOptionKeydown($event)"
           :key="option">
             {{option}}
         </div>
@@ -50,19 +52,17 @@
           return [];
         }
       },
-      keycodeEmitters: {
-        type: Array,
-        default: function () {
-          return [];
-        }
-      },
       advanceFocusKeycodes: {
         type: Array,
         default: function () {
           return [];
         }
       },
-      regressFocusKeycodes: {
+      disabled: {
+        type: Boolean,
+        default: false
+      },
+      inputKeycodeEmitters: {
         type: Array,
         default: function () {
           return [];
@@ -72,15 +72,27 @@
         type: String,
         default: ''
       },
-      text: {
-        type: String,
-        default: ''
+      regressFocusKeycodes: {
+        type: Array,
+        default: function () {
+          return [];
+        }
       },
       selectableOptions: {
         type: Array,
         default: function () {
           return [];
         }
+      },
+      selectableOptionsKeycodeEmitters: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      text: {
+        type: String,
+        default: ''
       }
     },
     data () {
@@ -100,16 +112,54 @@
       closeSelectableOptions: function () {
         this.mySelectableOptions = [];
       },
-      onKeydown: function (event) {
-        var shouldAdvance = this.advanceFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
-        var shouldRegress = this.regressFocusKeycodes.find(arrowKey => arrowKey === event.keyCode);
+      onInputKeydown: function (event) {
+        this.p_handleKeydown(event, this.inputKeycodeEmitters, this.myText);
+      },
+      onSelectableOptionKeydown: function (event) {
+        this.p_handleKeydown(event, this.selectableOptionsKeycodeEmitters, this.optionInFocus);
+      },
+      onActionableIconClick: function (event, actionableIcon) {
+        this.$emit('action', { action: actionableIcon.action, input: this.myText });
+
+        this.p_handleActionsCommonFunctionality(actionableIcon);
+      },
+      optionClicked: function (clickedOption) {
+        this.$emit('action', { action: 'option-selected', input: clickedOption });
+      },
+      p_handleKeydown (event, keycodeEmitters, emit) {
+        var keycodeEmitter = keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
+        if (keycodeEmitter) {
+          if (emit) {
+            this.$emit('key', { code: event.keyCode, input: emit });
+          }
+
+          this.p_handleActionsCommonFunctionality(keycodeEmitter);
+        } else {
+          this.p_handleFocus(event);
+        }
+      },
+      p_handleActionsCommonFunctionality (action) {
+        if (action.shouldClear) {
+          this.myText = '';
+        }
+
+        if (action.retainFocus) {
+          this.inputInFocus = true;
+          this.optionInFocus = undefined;
+        } else {
+          this.inputInFocus = false;
+        }
+      },
+      p_handleFocus (event) {
+        var shouldAdvance = this.advanceFocusKeycodes.find(keyCode => keyCode === event.keyCode);
+        var shouldRegress = this.regressFocusKeycodes.find(keyCode => keyCode === event.keyCode);
 
         if (this.mySelectableOptions.length && (shouldAdvance || shouldRegress)) {
           var inFocusIndex = this.mySelectableOptions.indexOf(this.optionInFocus);
           var lastOptionInFocus = inFocusIndex !== this.mySelectableOptions.length - 1;
           var firstOptionInFocus = inFocusIndex !== 0;
 
-          if (inputInFocus) {
+          if (this.inputInFocus) {
             this.optionInFocus = shouldAdvance ? this.mySelectableOptions[0] : this.mySelectableOptions[this.mySelectableOptions.length - 1];
             this.inputInFocus = false;
           } else if (shouldAdvance && lastOptionInFocus) {
@@ -122,35 +172,8 @@
             this.optionInFocus = undefined;
             this.inputInFocus = true;
           }
-        } else {
+        } else if (this.mySelectableOptions.length) {
           this.closeSelectableOptions();
-        }
-
-        var keycodeEmitter = this.keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
-        if (keycodeEmitter) {
-          this.$emit('key', { code: event.keyCode, input: this.myText });
-
-          this.p_handleActionsCommonFunctionality(keycodeEmitter);
-        }
-      },
-      onAction: function (event, actionableIcon) {
-        this.$emit('action', { action: actionableIcon.action, input: this.myText });
-
-        this.p_handleActionsCommonFunctionality(actionableIcon);
-      },
-      optionClicked: function (clickedOption) {
-        this.$emit('action', { action: 'option-selected', input: clickedOption });
-      },
-      p_handleActionsCommonFunctionality(action) {
-        if (action.shouldClear) {
-          this.myText = '';
-        }
-
-        if (action.retainFocus) {
-          this.inputInFocus = true;
-          this.optionInFocus = undefined;
-        } else {
-          this.inputInFocus = false;
         }
       }
     }
@@ -186,5 +209,9 @@
   .close-selectable-options {
     left: 90%;
     position: absolute;
+  }
+
+  .option:focus {
+    outline: none;
   }
 </style>

@@ -2,7 +2,7 @@
   <extended-input
     v-on:action="onAction($event)"
     v-on:key="onKey($event)"
-    :keycodeEmitters="keys"
+    :inputKeycodeEmitters="keys"
     :selectableOptions="typeaheadItems"
     :advanceFocusKeycodes="advanceFocusKeycodes"
     :regressFocusKeycodes="regressFocusKeycodes">
