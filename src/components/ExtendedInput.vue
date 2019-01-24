@@ -3,7 +3,7 @@
     <input
       type="text"
       ref="input"
-      @keydown="onInputKeydown($event)"
+      @keyup="onInputKeyup($event)"
       :placeholder="placeholder"
       :disabled="disabled"
       v-focus="inputInFocus"
@@ -112,11 +112,11 @@
       closeSelectableOptions: function () {
         this.mySelectableOptions = [];
       },
-      onInputKeydown: function (event) {
-        this.p_handleKeydown(event, this.inputKeycodeEmitters, this.myText);
+      onInputKeyup: function (event) {
+        this.p_handleKey(event, this.inputKeycodeEmitters, this.myText);
       },
       onSelectableOptionKeydown: function (event) {
-        this.p_handleKeydown(event, this.selectableOptionsKeycodeEmitters, this.optionInFocus);
+        this.p_handleKey(event, this.selectableOptionsKeycodeEmitters, this.optionInFocus);
       },
       onActionableIconClick: function (event, actionableIcon) {
         this.$emit('action', { action: actionableIcon.action, input: this.myText });
@@ -126,10 +126,10 @@
       optionClicked: function (clickedOption) {
         this.$emit('action', { action: 'option-selected', input: clickedOption });
       },
-      p_handleKeydown (event, keycodeEmitters, emit) {
+      p_handleKey (event, keycodeEmitters, emit) {
         var keycodeEmitter = keycodeEmitters.find((keycodeEmitter) => keycodeEmitter.keycode === event.keyCode);
         if (keycodeEmitter) {
-          if (emit) {
+          if (!event.ctrlKey) {
             this.$emit('key', { code: event.keyCode, input: emit });
           }
 

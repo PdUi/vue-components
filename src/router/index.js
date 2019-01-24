@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-// import searchbox from '@/components/searchbox';
 import ExtendedInputDemo from '@/views/ExtendedInputDemo';
+import SearchBoxDemo from '@/views/SearchBoxDemo';
 
 Vue.use(Router);
 
@@ -11,11 +11,11 @@ export default new Router({
       path: '/',
       name: 'extended-input-demo',
       component: ExtendedInputDemo
-    } // ,
-    // {
-    //   path: '/searchbox',
-    //   name: 'searchbox',
-    //   component: searchbox
-    // }
+    },
+    {
+      path: '/searchbox',
+      name: 'searchbox',
+      component: SearchBoxDemo
+    }
   ]
 });

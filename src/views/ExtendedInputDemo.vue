@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import Keycode from '@/enums/keycode';
+import { KeyCode } from '@/enums/keycode';
 import KeycodeEmitter from '@/models/keycodeEmitter';
 import ExtendedInput from '@/components/ExtendedInput';
 
@@ -22,12 +22,12 @@ export default {
   data () {
     return {
       keys: [
-        new KeycodeEmitter(Keycode.enter),
-        new KeycodeEmitter(Keycode.tab)
+        new KeycodeEmitter(KeyCode.enter),
+        new KeycodeEmitter(KeyCode.tab)
       ],
       typeaheadItems: [],
-      advanceFocusKeycodes: [Keycode.downarrow],
-      regressFocusKeycodes: [Keycode.uparrow]
+      advanceFocusKeycodes: [KeyCode.downarrow],
+      regressFocusKeycodes: [KeyCode.uparrow]
     };
   },
   methods: {

@@ -2,7 +2,7 @@ import Vue from 'vue';
 import ExtendedInput from '@/components/ExtendedInput';
 import ActionEmitter from '@/models/actionEmitter';
 import KeycodeEmitter from '@/models/keycodeEmitter';
-import Keycode from '@/enums/keycode';
+import { KeyCode } from '@/enums/keycode';
 
 const Constructor = Vue.extend(ExtendedInput);
 const vmFactory = propsData => new Constructor({ propsData }).$mount();
@@ -78,10 +78,10 @@ describe('ExtendedInput.vue', () => {
     it('calls onKeydown when key pressed in input', () => {
       const stub = jest.fn();
       const vm = vmFactory();
-      vm.onInputKeydown = stub;
+      vm.onInputKeyup = stub;
 
       const event = document.createEvent('HTMLEvents');
-      event.initEvent('keydown', false, true);
+      event.initEvent('keyup', false, true);
       vm.$el.querySelector('input').dispatchEvent(event);
       expect(stub).toBeCalled();
     });
@@ -200,13 +200,13 @@ describe('ExtendedInput.vue', () => {
     });
   });
 
-  describe('onInputKeydown', () => {
-    it('should call p_handleKeydown', () => {
+  describe('onInputKeyup', () => {
+    it('should call p_handleKey', () => {
       const stub = jest.fn();
 
       const vm = vmFactory();
-      vm.p_handleKeydown = stub;
-      vm.onInputKeydown(undefined);
+      vm.p_handleKey = stub;
+      vm.onInputKeyup(undefined);
 
       expect(stub)
         .toBeCalled();
@@ -214,11 +214,11 @@ describe('ExtendedInput.vue', () => {
   });
 
   describe('onSelectableOptionKeydown', () => {
-    it('should call p_handleKeydown', () => {
+    it('should call p_handleKey', () => {
       const stub = jest.fn();
 
       const vm = vmFactory();
-      vm.p_handleKeydown = stub;
+      vm.p_handleKey = stub;
       vm.onSelectableOptionKeydown(undefined);
 
       expect(stub)
@@ -277,90 +277,77 @@ describe('ExtendedInput.vue', () => {
     });
   });
 
-  describe('p_handleKeydown', () => {
+  describe('p_handleKey', () => {
     it('p_handleFocus should be called', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.tab;
+      event.keyCode = KeyCode.tab;
       event.initEvent('keydown', false, true);
 
       const stub = jest.fn();
       const vm = vmFactory();
       vm.p_handleFocus = stub;
-      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
+      vm.p_handleKey(event, inputKeycodeEmitters, undefined);
       expect(stub).toBeCalled();
     });
 
     it('p_handleActionsCommonFunctionality should be called', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       const stub = jest.fn();
       const vm = vmFactory();
       vm.p_handleActionsCommonFunctionality = stub;
-      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
+      vm.p_handleKey(event, inputKeycodeEmitters, undefined);
       expect(stub).toBeCalled();
     });
 
     it('$emit should be called', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       const stub = jest.fn();
       const vm = vmFactory();
       vm.$emit = stub;
-      vm.p_handleKeydown(event, inputKeycodeEmitters, 'Hello World');
+      vm.p_handleKey(event, inputKeycodeEmitters, 'Hello World');
       expect(stub).toBeCalled();
-    });
-
-    it('$emit should not be called', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
-      const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
-      event.initEvent('keydown', false, true);
-
-      const stub = jest.fn();
-      const vm = vmFactory();
-      vm.$emit = stub;
-      vm.p_handleKeydown(event, inputKeycodeEmitters, undefined);
-      expect(stub).not.toBeCalled();
     });
   });
 
   describe('p_handleActionsCommonFunctionality', () => {
     it('input should retain focus', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const vm = vmFactory({ inputKeycodeEmitters });
 
       expect(vm.inputInFocus)
         .toEqual(true);
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
-      event.initEvent('keydown', false, true);
+      event.keyCode = KeyCode.enter;
+      event.initEvent('keyup', false, true);
 
-      vm.onInputKeydown(event);
+      vm.onInputKeyup(event);
 
       expect(vm.inputInFocus)
         .toEqual(true);
     });
 
     it('input should not retain focus', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter, { retainFocus: false })];
       const vm = vmFactory({ inputKeycodeEmitters });
 
       expect(vm.inputInFocus)
         .toEqual(true);
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
-      event.initEvent('keydown', false, true);
+      event.keyCode = KeyCode.enter;
+      event.initEvent('keyup', false, true);
 
-      vm.onInputKeydown(event);
+      vm.onInputKeyup(event);
 
       expect(vm.inputInFocus)
         .toEqual(false);
@@ -369,11 +356,11 @@ describe('ExtendedInput.vue', () => {
     it('focus should be called on input', () => {
       const stub = jest.fn();
 
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const vm = vmFactory({ inputKeycodeEmitters });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
       vm.$el.querySelector('input').dispatchEvent(event);
       event.target.focus = stub;
@@ -387,12 +374,12 @@ describe('ExtendedInput.vue', () => {
     it('focus should not be called on input', () => {
       const stub = jest.fn();
 
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { retainFocus: false })];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter, { retainFocus: false })];
       const vm = vmFactory({ inputKeycodeEmitters });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
-      event.initEvent('keydown', false, true);
+      event.keyCode = KeyCode.enter;
+      event.initEvent('keyup', false, true);
       vm.$el.querySelector('input').dispatchEvent(event);
       event.target.focus = stub;
 
@@ -404,15 +391,15 @@ describe('ExtendedInput.vue', () => {
     });
 
     it('keycode emitter should clear input', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter)];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter)];
       const vm = vmFactory({ text: 'Hello World', inputKeycodeEmitters });
 
       expect(vm.$el.querySelector('input').value)
         .toEqual('Hello World');
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
-      event.initEvent('keydown', false, true);
+      event.keyCode = KeyCode.enter;
+      event.initEvent('keyup', false, true);
       vm.$el.querySelector('input').dispatchEvent(event);
 
       vm._watcher.run();
@@ -422,14 +409,14 @@ describe('ExtendedInput.vue', () => {
     });
 
     it('keycode emitter should not clear input', () => {
-      const inputKeycodeEmitters = [new KeycodeEmitter(Keycode.enter, { shouldClear: false })];
+      const inputKeycodeEmitters = [new KeycodeEmitter(KeyCode.enter, { shouldClear: false })];
       const vm = vmFactory({ text: 'Hello World', inputKeycodeEmitters });
 
       expect(vm.$el.querySelector('input').value)
         .toEqual('Hello World');
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
       vm.$el.querySelector('input').dispatchEvent(event);
 
@@ -447,7 +434,7 @@ describe('ExtendedInput.vue', () => {
       const vm = vmFactory({ advanceFocusKeycodes: [], regressFocusKeycodes: [], selectableOptions: [''] });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.closeSelectableOptions = stub;
@@ -460,10 +447,10 @@ describe('ExtendedInput.vue', () => {
     it('should not close selectable options', () => {
       const stub = jest.fn();
 
-      const vm = vmFactory({ advanceFocusKeycodes: [Keycode.enter], regressFocusKeycodes: [], selectableOptions: [''] });
+      const vm = vmFactory({ advanceFocusKeycodes: [KeyCode.enter], regressFocusKeycodes: [], selectableOptions: [''] });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.closeSelectableOptions = stub;
@@ -476,13 +463,13 @@ describe('ExtendedInput.vue', () => {
 
     it('should remove focus from input', () => {
       const vm = vmFactory({
-        advanceFocusKeycodes: [Keycode.enter],
+        advanceFocusKeycodes: [KeyCode.enter],
         regressFocusKeycodes: [],
         selectableOptions: ['']
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       expect(vm.inputInFocus)
@@ -496,13 +483,13 @@ describe('ExtendedInput.vue', () => {
 
     it('should place focus on option', () => {
       const vm = vmFactory({
-        advanceFocusKeycodes: [Keycode.enter],
+        advanceFocusKeycodes: [KeyCode.enter],
         regressFocusKeycodes: [],
         selectableOptions: ['']
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       expect(vm.optionInFocus)
@@ -517,13 +504,13 @@ describe('ExtendedInput.vue', () => {
     it('should advance focus', () => {
       const selectableOptions = ['foo', 'bar'];
       const vm = vmFactory({
-        advanceFocusKeycodes: [Keycode.enter],
+        advanceFocusKeycodes: [KeyCode.enter],
         regressFocusKeycodes: [],
         selectableOptions
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.optionInFocus = selectableOptions[0];
@@ -539,12 +526,12 @@ describe('ExtendedInput.vue', () => {
       const selectableOptions = ['foo', 'bar'];
       const vm = vmFactory({
         advanceFocusKeycodes: [],
-        regressFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [KeyCode.enter],
         selectableOptions
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.optionInFocus = selectableOptions[1];
@@ -560,12 +547,12 @@ describe('ExtendedInput.vue', () => {
       const selectableOptions = ['foo', 'bar'];
       const vm = vmFactory({
         advanceFocusKeycodes: [],
-        regressFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [KeyCode.enter],
         selectableOptions
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.optionInFocus = selectableOptions[0];
@@ -581,12 +568,12 @@ describe('ExtendedInput.vue', () => {
       const selectableOptions = ['foo', 'bar'];
       const vm = vmFactory({
         advanceFocusKeycodes: [],
-        regressFocusKeycodes: [Keycode.enter],
+        regressFocusKeycodes: [KeyCode.enter],
         selectableOptions
       });
 
       const event = document.createEvent('HTMLEvents');
-      event.keyCode = Keycode.enter;
+      event.keyCode = KeyCode.enter;
       event.initEvent('keydown', false, true);
 
       vm.optionInFocus = selectableOptions[0];
